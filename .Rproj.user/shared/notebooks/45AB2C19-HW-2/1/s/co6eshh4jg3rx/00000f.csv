@@ -1,0 +1,5 @@
+"0","alaska_flights <- flights %>% "
+"0","  filter(carrier == 'AA')"
+"0",""
+"0","early_january_weather <- weather %>%"
+"0","  filter(origin == 'EWR', month == '1')"

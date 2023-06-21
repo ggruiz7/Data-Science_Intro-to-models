@@ -1,0 +1,268 @@
+---
+title: "Assignment 2"
+author: "Gabriel Garcia-Ruiz, 917320019"
+date: "2023-04-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+## Probelem 1
+The title of this data set is "Swiss Fertility and Socioeconomic Indicators (1888) Data" (under the name 'swiss' in R data sets). It is a a data set of various socio-economic indicators for the country of Switzerland around 1888. The source is roginally Swiss census data, but it was compiled by Francine Van der Walle in '"Education and the Demographic Transition in Switzerland." Population and Development Review, vol. 6, no. 3. 1980.' There are 6 variables in this data set: Fertility (common standardized fertility measure), Agriculture (% of males involved in agriculture as occupation), Examination (% draftees recieving highest mark on army examination), Education (%educatiob beyobd primary school for draftees), Catholic (% Catholic, as opposed to protestant) and Infant Mortality ('Infant.Mortality', live births who live less than 1 year). Each variables has been standardized between [0, 100], all variables but 'Fertility' give proportions of the population. The samples of this data set are each of 47 French-speaking provinces of Switzerland. I am generally interested in census data of any place. As an Economics major I have a lot of interest in social and economic data.
+
+```{r, include=FALSE}
+library(nycflights13)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(lubridate)
+#install.packages('nycflights13')
+```
+
+## Problem 2
+### I
+The dim() function returns the dimensions of a data set. 
+
+```{r}
+dim(flights)
+```
+
+Listing from right to left, the number of rows (observations) = 336,776 and the number of columns (variables) = 19.
+
+### II
+Using the ? command, R will open a window displaying various information about the data set, including an explanation of each variable.
+
+```{r}
+#?flights
+```
+
+talinum - Plane tail number \
+flight - Flight number \
+carrier - Two letter abbreviation of airline name \
+dep_delay - Departure delay in minutes \
+arr_delay - Arrival delay in minutes (format HHMM, local tz)
+
+### III
+
+```{r}
+#?weather
+```
+
+visib - Visibility in miles \
+time_hour - Date and hour of the recording as a POSIXct date \
+temp - Temperature in F 
+
+
+
+## Problem 3
+%>% to access the correct data set, then filter() to filter according to requirements.
+
+```{r}
+alaska_flights <- flights %>% 
+  filter(carrier == 'AA')
+
+early_january_weather <- weather %>%
+  filter(origin == 'EWR', month == '1')
+```
+
+
+
+## Problem 4
+Scatter plot of departure delay against arrival delay.
+
+```{r}
+ggplot(alaska_flights, aes(alaska_flights$dep_delay, alaska_flights$arr_delay)) + geom_point() + xlab('Departure Delay') + ylab('Arrival Delay')
+```
+
+These two variables have a very linear relationship, where arr_delay is roughly equal to dep_delay. This relationship makes sense, a plane is likely to arrive to its destination late by the same amount of time that it was late to depart from its origin, and vice versa. 
+
+
+## Problem 5
+Scatter plot with transparancy of plot points.
+
+```{r}
+# scatter plot with transparency (need ggplot2)
+# geom.point() has option alpha for transparency level [0,1]
+ggplot(alaska_flights, aes(alaska_flights$dep_delay, alaska_flights$arr_delay)) + geom_point(alpha = 0.2) + xlab('Departure Delay') + ylab('Arrival Delay')
+```
+
+The transparency allows one to see the density of the grouping each data point. Where many data points are clustered they look dark, where there are few they look light.
+
+
+## Problem 6
+Line plot of date against temperature at EWR airport in January.
+
+```{r}
+# define date integer vector, from time_hour string column
+date <- ymd_hms(early_january_weather$time_hour)
+
+ggplot(early_january_weather, aes(date, early_january_weather$temp)) + geom_line() + labs(title = 'Temperature in EWR Airport') + xlab('Date') + ylab('Temperature')
+```
+
+The temperature varies a surprising amount for just a single month, it appears to vary by over 50 degrees F. There doesn't appear to be a clear pattern for the temperature over time, perhaps only that adjacent days are similar in temperature.
+
+
+## Problem 7
+Regression model for y.
+
+```{r}
+# number of observations
+n <- 100 
+
+# x is uniform, z is normal
+x <- runif(n, -2, 2)
+z <- rnorm(n, 0, 0.5)
+
+# error term
+e <- rnorm(n, 0, 1)
+
+# formuala for y
+y <- x + 2*z + x*z + e
+
+# combine into data frame
+data <- data.frame(x, z, y)
+
+# lm() for linear model
+regression <- lm(y ~ x, data = data)
+summary(regression)$coefficients
+```
+
+There is only one coefficient in this case, since we only regress on x. The p value suggests a good estimate for the coefficient on x (p < 0.05).
+
+
+
+## Problem 8
+Turn model into function, and produce a histogram of coefficient results from model simulations.
+
+```{r}
+sim_regression <- function(n) {
+  x <- runif(n, -2, 2)
+  z <- rnorm(n, 0, 0.5)
+  e <- rnorm(n, 0, 1)
+  y <- x*1 + z*2 + x*z*1 + e
+  
+  data <- data.frame(x, z, y)
+
+  regression <- lm(y ~ x, data = data)
+
+  return(coef(regression))
+}
+
+set.seed(14)
+
+# run simulation n times
+n_sims <- 5000
+results <- t(replicate(n_sims, sim_regression(100)))
+
+# extract estimated coefficients for x
+estimates <- results[, 2]
+
+# create histogram of estimates
+hist(estimates, main = "Histogram of estimated coefficients", xlab = "Estimated Coefficient of x")
+
+# add vertical line for simulation mean
+abline(v = mean(estimates), lwd = 2, col = "black")
+
+# add vertical line for true value
+abline(v = 1, lwd = 2, col = "red", lty = 2)
+```
+
+```{r}
+# simulation mean
+sim_mean <- mean(estimates)
+print(paste0("Simulation mean of estimated coefficients: ", sim_mean))
+```
+
+Using the concept of biased-ness, I can say the this model is an unbiased estimator of the coefficient on x. This is because estimated value is very close to the real value, after many simulations.
+
+
+
+## Problem 9
+By setting a seed before running the simulation, I can ensure that the same results are returned every time the code chunk is run.
+
+```{r}
+sim_regression <- function(n) {
+  x <- runif(n, -2, 2)
+  z <- rnorm(n, 0, 0.5)
+  e <- rnorm(n, 0, 1)
+  y <- x*1 + z*2 + x*z*1 + e
+  
+  data <- data.frame(x, z, y)
+
+  regression <- lm(y ~ x, data = data)
+
+  return(coef(regression))
+}
+
+set.seed(14)
+
+# run simulation n times
+n_sims <- 5000
+results <- t(replicate(n_sims, sim_regression(100)))
+
+# extract estimated coefficients for x
+estimates <- results[, 2]
+```
+
+```{r}
+# simulation mean
+sim_mean <- mean(estimates)
+print(paste0("Simulation mean of estimated coefficients: ", sim_mean))
+```
+
+As expected, no matter many times I run the code chunk from 8. and subsequently run the above code chunk to display the mean, the mean returned is same every time. This would not be the case if I removed the seed.
+
+
+
+## Problem 10
+New regression model on y.
+
+```{r}
+n <- 100
+
+x <- runif(n, -2, 2)
+z <- rnorm(n, 0, 0.5)
+
+# error term for z
+e_z <- rnorm(n, 0, 0.5)
+
+# formula for z
+z <- x + 1 + e_z
+
+# error term for y
+e_y <- rnorm(n, 0, 1)
+
+y <- x + 2*z + e_y
+
+data <- data.frame(x, z, y)
+
+regression <- lm(y ~ x, data = data)
+
+summary(regression)$coefficients
+```
+
+This model appears to be biased in its estimation of x, since it does not estimate the true value of β1 (1) well, the estimate is usually close to 3.
+
+
+
+## Acknowledgements
+Class Notes: \
+Appendix C, D, E
+
+ggplot2: \
+https://ggplot2.tidyverse.org/reference/labs.html \
+http://www.sthda.com/english/wiki/ggplot2-line-plot-quick-start-guide-r-software-and-data-visualization
+
+Other: \
+https://stackoverflow.com/questions/24536154/what-does-mean-in-r \
+https://www.tutorialspoint.com/r/r_histograms.htm
+
+```{r}
+sessionInfo()
+```

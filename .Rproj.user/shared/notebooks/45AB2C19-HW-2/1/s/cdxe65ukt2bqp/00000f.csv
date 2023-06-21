@@ -1,0 +1,7 @@
+"0","# simulation mean"
+"0","sim_mean <- mean(estimates)"
+"0","print(paste0(""Simulation mean of estimated coefficients: "", sim_mean))"
+"1","[1]"
+"1"," ""Simulation mean of estimated coefficients: 0.997515875013605"""
+"1","
+"

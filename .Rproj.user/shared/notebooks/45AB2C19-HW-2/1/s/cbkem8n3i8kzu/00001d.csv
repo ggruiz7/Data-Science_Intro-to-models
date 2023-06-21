@@ -1,0 +1,1 @@
+"0","ggplot(alaska_flights, aes(alaska_flights$dep_delay, alaska_flights$arr_delay)) + geom_point() + xlab('Departure Delay') + ylab('Arrival Delay')"

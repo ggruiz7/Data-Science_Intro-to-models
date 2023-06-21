@@ -1,0 +1,4 @@
+"0","# define date integer vector, from time_hour string column"
+"0","date <- ymd_hms(early_january_weather$time_hour)"
+"0",""
+"0","ggplot(early_january_weather, aes(date, early_january_weather$temp)) + geom_line() + labs(title = 'Temperature in EWR Airport') + xlab('Date') + ylab('Temperature')"
